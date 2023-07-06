@@ -3,8 +3,9 @@ version: '3.7'
 services:
   server:
     image: nginx
+    container_name: ninja_server
     restart: always
-    env_file: env
+    env_file: docker-compose.env
     volumes:
       # Vhost configuration
       #- ./config/caddy/Caddyfile:/etc/caddy/Caddyfiledocker-com
@@ -15,8 +16,8 @@ services:
     # Run webserver nginx on port 80
     # Feel free to modify depending what port is already occupied
     ports:
-      - "80:80"
-      #- "443:443"
+      - "8083:80"
+      # - "44392:443"
     networks:
       - invoiceninja
     extra_hosts:
@@ -24,7 +25,8 @@ services:
 
   app:
     image: invoiceninja/invoiceninja:5
-    env_file: env
+    container_name: ninja_app
+    env_file: docker-compose.env
     restart: always
     volumes:
       - ./config/hosts:/etc/hosts:ro
@@ -39,18 +41,18 @@ services:
 
   db:
     image: mysql:8
-#    When running on ARM64 use MariaDB instead of MySQL
-#    image: mariadb:10.4
-#    For auto DB backups comment out image and use the build block below
-#    build:
-#      context: ./config/mysql
+    container_name: ninja_db
+    #    When running on ARM64 use MariaDB instead of MySQL
+    #    image: mariadb:10.4
+    #    For auto DB backups comment out image and use the build block below
+    #    build:
+    #      context: ./config/mysql
     ports:
       - "3305:3306"
     restart: always
-    env_file: env
+    env_file: docker-compose.env
     volumes:
       - ./docker/mysql/data:/var/lib/mysql:rw,delegated
-
       # remove comments for next 4 lines if you want auto sql backups
       #- ./docker/mysql/bak:/backups:rw
       #- ./config/mysql/backup-script:/etc/cron.daily/daily:ro
@@ -61,26 +63,6 @@ services:
     extra_hosts:
       - "in5.localhost:192.168.1.40" #host and ip
 
-  # THIS IS ONLY A VALID CONFIGURATION FOR IN 4. DO NOT USE FOR IN 5.
-  # cron:
-  #   image: invoiceninja/invoiceninja:alpine-4
-  #   volumes:
-      # - ./docker/app/public:/var/www/app/public:rw,delegated
-      # - ./docker/app/storage:/var/www/app/storage:rw,delegated
-      # - ./docker/app/public/logo:/var/www/app/public/logo:rw,delegated
-  #   entrypoint: |
-  #     /bin/sh -c 'sh -s <<EOF
-  #     trap "break;exit" SIGHUP SIGINT SIGTERM
-  #     sleep 300s
-  #     while /bin/true; do
-  #       ./artisan ninja:send-invoices
-  #       ./artisan ninja:send-reminders
-  #       sleep 1d
-  #     done
-  #     EOF'
-  #   networks:
-  #     - invoiceninja
-  #
-
 networks:
   invoiceninja:
+    name: invoiceninja
